@@ -888,28 +888,22 @@ function soundMove(){
     noise.connect(bp);bp.connect(noiseGain);noiseGain.connect(ctx.destination);
     noise.start(t);noise.stop(t+0.28);
 
-    // ── Low oscillator — body/weight under the noise ──
-    const osc=ctx.createOscillator();
-    osc.type='sawtooth';
-    osc.frequency.setValueAtTime(48,t);
-    osc.frequency.exponentialRampToValueAtTime(95,t+0.06);   // rev up
-    osc.frequency.exponentialRampToValueAtTime(52,t+0.20);   // settle back
+   // ── Higher-pitched oscillator — realistic engine tone ──
+const osc=ctx.createOscillator();
+osc.type='triangle';  // Changed from 'sawtooth' for cleaner tone
+osc.frequency.setValueAtTime(180,t);  // Start higher (was 48)
+osc.frequency.exponentialRampToValueAtTime(280,t+0.08);   // Quick rev up to higher pitch
+osc.frequency.linearRampToValueAtTime(160,t+0.20);   // Drop back down
 
-    // Slight waveshaper distortion — adds mechanical grit to the tone
-    const ws=ctx.createWaveShaper();
-    const curve=new Float32Array(256);
-    for(let i=0;i<256;i++){const x=i*2/256-1; curve[i]=x<0?-Math.pow(-x,.7):Math.pow(x,.7);}
-    ws.curve=curve;
+// Reduce/remove the waveshaper for cleaner sound
+const oscGain=ctx.createGain();
+oscGain.gain.setValueAtTime(0.0,t);
+oscGain.gain.linearRampToValueAtTime(0.28,t+0.04);  // Snappier attack
+oscGain.gain.exponentialRampToValueAtTime(0.12,t+0.15);
+oscGain.gain.exponentialRampToValueAtTime(0.001,t+0.24);
 
-    const oscGain=ctx.createGain();
-    oscGain.gain.setValueAtTime(0.0,t);
-    oscGain.gain.linearRampToValueAtTime(0.22,t+0.03);
-    oscGain.gain.exponentialRampToValueAtTime(0.10,t+0.12);
-    oscGain.gain.exponentialRampToValueAtTime(0.001,t+0.24);
-
-    osc.connect(ws);ws.connect(oscGain);oscGain.connect(ctx.destination);
-    osc.start(t);osc.stop(t+0.26);
-
+osc.connect(oscGain);oscGain.connect(ctx.destination);  // Skip waveshaper
+osc.start(t);osc.stop(t+0.26);
   }catch(e){}
 }
 function soundWin(){
